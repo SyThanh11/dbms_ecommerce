@@ -35,7 +35,7 @@ public class OrderController {
 
     @Operation(summary = "Create new order", description = "Api for create order")
     @PostMapping
-    ResponseEntity<ApiResponse<OrderResponse>> createRole(@RequestBody OrderCreationRequest request){
+    ResponseEntity<ApiResponse<OrderResponse>> createOrder(@RequestBody OrderCreationRequest request){
         OrderResponse orderResponse = orderService.createOrder(request);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(
@@ -45,6 +45,39 @@ public class OrderController {
                         .build()
         );
     }
+
+    @Operation(summary = "Select payment method", description = "API for selecting payment method for an order")
+    @PostMapping("/{orderId}/select-payment")
+    ResponseEntity<ApiResponse<OrderResponse>> selectPaymentMethod(
+            @PathVariable String orderId,
+            @RequestParam String paymentMethod) {
+
+        OrderResponse orderResponse = orderService.selectPaymentMethod(orderId, paymentMethod);
+
+        return ResponseEntity.status(HttpStatus.OK).body(
+                ApiResponse.<OrderResponse>builder()
+                        .message("Payment method selected successfully!")
+                        .data(orderResponse)
+                        .build()
+        );
+    }
+
+    @Operation(summary = "Confirm payment", description = "API for confirming payment for an order")
+    @PostMapping("/{orderId}/confirm-payment")
+    ResponseEntity<ApiResponse<OrderResponse>> confirmPayment(
+            @PathVariable String orderId,
+            @RequestParam boolean isSuccess) {
+
+        OrderResponse orderResponse = orderService.confirmPayment(orderId, isSuccess);
+
+        return ResponseEntity.status(HttpStatus.OK).body(
+                ApiResponse.<OrderResponse>builder()
+                        .message(isSuccess ? "Payment confirmed successfully!" : "Payment failed, order canceled.")
+                        .data(orderResponse)
+                        .build()
+        );
+    }
+
 
     @Operation(summary = "Get order by id", description = "Api for get order by id")
     @GetMapping("/{id}")

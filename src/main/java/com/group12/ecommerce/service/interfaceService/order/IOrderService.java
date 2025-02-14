@@ -10,9 +10,12 @@ import java.util.List;
 
 public interface IOrderService {
     CustomPageResponse<OrderResponse> getAllOrdersWithPage(Pageable pageable);
-    OrderResponse createOrder(OrderCreationRequest request);
     List<OrderResponse> getAllOrders();
     OrderResponse getOrderById(String id);
     OrderResponse updateOrder(String id, OrderUpdateRequest request);
     void deleteOrder(String id);
+
+    OrderResponse createOrder(OrderCreationRequest request);
+    OrderResponse selectPaymentMethod(String orderId, String paymentMethod);
+    OrderResponse confirmPayment(String orderId, boolean isSuccess);
 }

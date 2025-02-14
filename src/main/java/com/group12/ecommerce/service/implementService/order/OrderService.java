@@ -8,12 +8,16 @@ import com.group12.ecommerce.dto.request.order_product.OrderProductDto;
 import com.group12.ecommerce.dto.response.order.OrderResponse;
 import com.group12.ecommerce.dto.response.page.CustomPageResponse;
 import com.group12.ecommerce.entity.order.OrderEntity;
+import com.group12.ecommerce.entity.order.OrderStatus;
 import com.group12.ecommerce.entity.order_product.OrderProductEntity;
+import com.group12.ecommerce.entity.payment.PaymentEntity;
+import com.group12.ecommerce.entity.payment.PaymentStatus;
 import com.group12.ecommerce.entity.product.ProductEntity;
 import com.group12.ecommerce.entity.user.UserEntity;
 import com.group12.ecommerce.mapper.order.IOrderMapper;
 import com.group12.ecommerce.repository.order.IOrderRepository;
 import com.group12.ecommerce.repository.order_product.IOrderProductRepository;
+import com.group12.ecommerce.repository.payment.IPaymentRepository;
 import com.group12.ecommerce.repository.product.IProductRepository;
 import com.group12.ecommerce.repository.user.IUserRepository;
 import com.group12.ecommerce.service.interfaceService.order.IOrderService;
@@ -29,6 +33,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -47,6 +52,8 @@ public class OrderService implements IOrderService {
     IUserRepository userRepository;
     @Autowired
     IOrderProductRepository orderProductRepository;
+    @Autowired
+    IPaymentRepository paymentRepository;
 
     @Autowired
     IOrderMapper orderMapper;
@@ -69,6 +76,7 @@ public class OrderService implements IOrderService {
                 .date(LocalDate.now())
                 .totalPrice(BigDecimal.ZERO)
                 .orderProducts(new HashSet<>())
+                .status(OrderStatus.PENDING)
                 .build();
 
         orderRepository.save(order);
@@ -113,6 +121,70 @@ public class OrderService implements IOrderService {
         return orderMapper.toOrderResponse(orderRepository.save(order));
     }
 
+    @Override
+    @Transactional
+    public OrderResponse selectPaymentMethod(String orderId, String paymentMethod) {
+        OrderEntity order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        if (!order.getStatus().equals(OrderStatus.PENDING)) {
+            throw new RuntimeException("Cannot change payment method for this order.");
+        }
+
+        PaymentEntity payment = PaymentEntity.builder()
+                .order(order)
+                .user(order.getUser())
+                .method(paymentMethod)
+                .date(LocalDateTime.now())
+                .pricePayment(order.getTotalPrice())
+                .status(PaymentStatus.PROCESSING) // Đang chờ thanh toán
+                .build();
+
+        paymentRepository.save(payment);
+        return orderMapper.toOrderResponse(order);
+    }
+
+    @Override
+    @Transactional
+    public OrderResponse confirmPayment(String orderId, boolean isSuccess) {
+        OrderEntity order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_EXISTED));
+
+        PaymentEntity payment = paymentRepository.findByOrderId(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        if (!order.getStatus().equals(OrderStatus.PENDING) ||
+                !payment.getStatus().equals(PaymentStatus.PROCESSING)) {
+            throw new RuntimeException("Order is not in a valid state for payment confirmation");
+        }
+
+        if (isSuccess) {
+            // ✅ Thanh toán thành công
+            order.setStatus(OrderStatus.PAID);
+            payment.setStatus(PaymentStatus.SUCCESS);
+            payment.setDate(LocalDateTime.now());
+        } else {
+            // ❌ Thanh toán thất bại -> Rollback
+            order.setStatus(OrderStatus.CANCELLED);
+            payment.setStatus(PaymentStatus.FAILED);
+
+            // ✅ Hoàn lại số lượng sản phẩm trong kho
+            for (OrderProductEntity orderProduct : order.getOrderProducts()) {
+                ProductEntity product = orderProduct.getProduct();
+                product.setTotal(product.getTotal() + orderProduct.getQuantity());
+            }
+            productRepository.saveAll(order.getOrderProducts().stream()
+                    .map(OrderProductEntity::getProduct).toList());
+
+            log.info("Payment failed for order {}. Order cancelled and stock restored.", orderId);
+        }
+
+        // ✅ Lưu cập nhật vào DB
+        paymentRepository.save(payment);
+        orderRepository.save(order);
+
+        return orderMapper.toOrderResponse(order);
+    }
 
     @Override
     public List<OrderResponse> getAllOrders() {
