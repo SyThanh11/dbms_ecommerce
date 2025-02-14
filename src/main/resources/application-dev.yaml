@@ -1,0 +1,64 @@
+server:
+  port: 8081
+  forward-headers-strategy: framework
+  servlet:
+    context-path: /ecommerce
+  domain: "http://localhost:8081"
+
+
+spring:
+  application:
+    name: ecommerce
+  datasource:
+    url: ${DBMS_CONNECTION:jdbc:mysql://localhost:3306/ecommerce}
+    username: ${MYSQL_ROOT_USERNAME:root}
+    password: ${MYSQL_ROOT_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    database: mysql
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: true
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: testemailgroup12@gmail.com
+#    password: Admin123.
+    password: mcrlpvwqnkpqotlp
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+jwt:
+  signerKey: "xqCC6vEOG1lbgwYJSt/GM+O4LkVj0k9zXHKDVaFEvaYA6OoByQPR40lUl4imbLV7"
+  valid-duration: 3600 # in second
+  refreshable-duration: 36000 # in seconds
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+
+open:
+  api:
+    title: "API-service document"
+    version: "v1.0.0"
+    description: "API Document for Ecommerce System"
+    server:
+      url: "http://localhost:8081/ecommerce"
+      description: "Server dev"
+
+
+
+
+
+
+
