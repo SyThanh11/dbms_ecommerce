@@ -7,7 +7,7 @@ server:
 
 security:
   user:
-    password:
+    password: admin
 
 spring:
   application:
@@ -64,6 +64,15 @@ open:
     server:
       url: "http://localhost:8081/ecommerce"
       description: "Server dev"
+
+vnpay:
+  tmnCode: 8JSOV3MW
+  hashSecret: E84Y7NM9IOP6P8R6OIKW5OPHID7HHJ3G
+  url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+  returnUrl: http://localhost:8081/ecommerce/api/vnpay/vnpay-payment
+  version: 2.1.0
+
+
 
 
 

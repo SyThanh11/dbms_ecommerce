@@ -22,6 +22,8 @@ import com.group12.ecommerce.repository.product.IProductRepository;
 import com.group12.ecommerce.repository.user.IUserRepository;
 import com.group12.ecommerce.service.interfaceService.order.IOrderService;
 import com.group12.ecommerce.service.interfaceService.order_scheduler.IOrderSchedulerService;
+import com.group12.ecommerce.service.interfaceService.vnpay.IVNPAYService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -60,6 +62,8 @@ public class OrderService implements IOrderService {
     IOrderMapper orderMapper;
     @Autowired
     IOrderSchedulerService orderSchedulerService;
+    @Autowired
+    IVNPAYService vnPayService;
 
     @Override
     public CustomPageResponse<OrderResponse> getAllOrdersWithPage(Pageable pageable) {
@@ -129,7 +133,7 @@ public class OrderService implements IOrderService {
 
     @Override
     @Transactional
-    public OrderResponse selectPaymentMethod(String orderId, String paymentMethod) {
+    public String selectPaymentMethod(String orderId, String orderInfo, String paymentMethod, String urlReturn, HttpServletRequest request) {
         OrderEntity order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
 
@@ -150,9 +154,9 @@ public class OrderService implements IOrderService {
 
         orderSchedulerService.cancelOrderRollback(order.getId());
         // ✅ Đặt timeout rollback sau 10 phút nếu không thanh toán
-        orderSchedulerService.schedulePaymentRollback(order.getId(), 1);
+        // orderSchedulerService.schedulePaymentRollback(order.getId(), 10);
 
-        return orderMapper.toOrderResponse(order);
+        return vnPayService.createPaymentUrl(order.getTotalPrice(), orderInfo, urlReturn, request);
     }
 
     @Override

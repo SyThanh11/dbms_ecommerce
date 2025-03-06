@@ -59,7 +59,8 @@ public class OpenApiConfig {
                         "com.group12.ecommerce.controller.category",
                         "com.group12.ecommerce.controller.product",
                         "com.group12.ecommerce.controller.permission",
-                        "com.group12.ecommerce.controller.order"
+                        "com.group12.ecommerce.controller.order",
+                        "com.group12.ecommerce.controller.vnpay"
                 )
                 .build();
     }

@@ -9,6 +9,7 @@ import com.group12.ecommerce.entity.order.OrderStatus;
 import com.group12.ecommerce.service.interfaceService.order.IOrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -49,16 +50,18 @@ public class OrderController {
 
     @Operation(summary = "Select payment method", description = "API for selecting payment method for an order")
     @PostMapping("/{orderId}/select-payment")
-    ResponseEntity<ApiResponse<OrderResponse>> selectPaymentMethod(
+    ResponseEntity<ApiResponse<String>> selectPaymentMethod(
             @PathVariable String orderId,
-            @RequestParam String paymentMethod) {
+            @RequestParam String paymentMethod,
+            HttpServletRequest request) {
 
-        OrderResponse orderResponse = orderService.selectPaymentMethod(orderId, paymentMethod);
+        String baseUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
+        String paymentResponse = orderService.selectPaymentMethod(orderId, orderId, paymentMethod, baseUrl, request);
 
         return ResponseEntity.status(HttpStatus.OK).body(
-                ApiResponse.<OrderResponse>builder()
+                ApiResponse.<String>builder()
                         .message("Payment method selected successfully!")
-                        .data(orderResponse)
+                        .data(paymentResponse)
                         .build()
         );
     }
