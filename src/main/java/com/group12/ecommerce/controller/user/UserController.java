@@ -12,7 +12,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -106,4 +105,35 @@ public class UserController {
         );
     }
 
+    @Operation(summary = "Search all users with filter condition",
+            description = "API for search all users with filter condition")
+    @GetMapping("/search")
+    public ResponseEntity<ApiResponse<CustomPageResponse<UserResponse>>> searchUsers(
+            @RequestParam(required = false) String username,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String fullName,
+            @RequestParam int page,
+            @RequestParam int size,
+            @RequestParam(defaultValue = "") String sort,
+            @RequestParam(defaultValue = "desc") String direction
+    ){
+        Pageable pageable;
+
+        if (sort.isEmpty()) {
+            pageable = PageRequest.of(page, size);
+        } else {
+            Sort.Direction sortDirection = direction.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
+            Sort sortBy = Sort.by(sortDirection, sort);
+            pageable = PageRequest.of(page, size, sortBy);
+        }
+
+        CustomPageResponse<UserResponse> users = userService.searchUsers(username, email, fullName, pageable);
+
+        return ResponseEntity.status(HttpStatus.OK).body(
+                ApiResponse.<CustomPageResponse<UserResponse>>builder()
+                        .message("Search users success")
+                        .data(users)
+                        .build()
+        );
+    }
 }

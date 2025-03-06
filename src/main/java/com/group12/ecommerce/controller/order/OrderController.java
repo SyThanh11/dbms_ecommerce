@@ -5,6 +5,7 @@ import com.group12.ecommerce.dto.request.order.OrderUpdateRequest;
 import com.group12.ecommerce.dto.response.api.ApiResponse;
 import com.group12.ecommerce.dto.response.order.OrderResponse;
 import com.group12.ecommerce.dto.response.page.CustomPageResponse;
+import com.group12.ecommerce.entity.order.OrderStatus;
 import com.group12.ecommerce.service.interfaceService.order.IOrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -153,6 +154,48 @@ public class OrderController {
                 ApiResponse.<CustomPageResponse<OrderResponse>>builder()
                         .message("Get all users success!")
                         .data(orderService.getAllOrdersWithPage(pageable))
+                        .build()
+        );
+    }
+
+    @Operation(summary = "Get user order history", description = "API for retrieving user's order history")
+    @GetMapping("/history")
+    public ResponseEntity<ApiResponse<CustomPageResponse<OrderResponse>>> getUserOrderHistory(
+            @RequestParam String userId,
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "") String sort,
+            @RequestParam(defaultValue = "desc") String direction
+    ) {
+        Pageable pageable;
+
+        if (sort.isEmpty()) {
+            pageable = PageRequest.of(page, size);
+        } else {
+            Sort.Direction sortDirection =
+                    direction.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
+            Sort sortBy = Sort.by(sortDirection, sort);
+            pageable = PageRequest.of(page, size, sortBy);
+        }
+
+        OrderStatus orderStatus = null;
+        if(status != null && !status.isEmpty()){
+            try {
+                orderStatus = OrderStatus.valueOf(status.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                        ApiResponse.<CustomPageResponse<OrderResponse>>builder()
+                                .message("Invalid status value: " + status)
+                                .build()
+                );
+            }
+        }
+
+        return ResponseEntity.status(HttpStatus.OK).body(
+                ApiResponse.<CustomPageResponse<OrderResponse>>builder()
+                        .message("Get user order history success!")
+                        .data(orderService.getUserOrderHistory(userId, orderStatus, pageable))
                         .build()
         );
     }

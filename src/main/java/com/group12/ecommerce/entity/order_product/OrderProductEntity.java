@@ -13,7 +13,12 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @Getter
 @Setter
-@Table(name = "order_product")
+@Table(
+        name = "order_product",
+        indexes = {
+                @Index(name = "idx_product", columnList = "product_id"),
+                @Index(name = "idx_order", columnList = "order_id")
+        })
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class OrderProductEntity {

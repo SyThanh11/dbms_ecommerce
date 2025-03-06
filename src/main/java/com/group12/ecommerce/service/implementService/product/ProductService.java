@@ -4,9 +4,12 @@ import com.group12.ecommerce.base.exception.AppException;
 import com.group12.ecommerce.base.exception.ErrorCode;
 import com.group12.ecommerce.dto.request.product.ProductCreationRequest;
 import com.group12.ecommerce.dto.request.product.ProductUpdateRequest;
+import com.group12.ecommerce.dto.response.page.CustomPageResponse;
 import com.group12.ecommerce.dto.response.product.ProductResponse;
+import com.group12.ecommerce.dto.response.user.UserResponse;
 import com.group12.ecommerce.entity.category.CategoryEntity;
 import com.group12.ecommerce.entity.product.ProductEntity;
+import com.group12.ecommerce.entity.user.UserEntity;
 import com.group12.ecommerce.mapper.product.IProductMapper;
 import com.group12.ecommerce.repository.category.ICategoryRepository;
 import com.group12.ecommerce.repository.product.IProductRepository;
@@ -17,10 +20,13 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -86,5 +92,20 @@ public class ProductService implements IProductService {
     @Override
     public void deleteProduct(Long id) {
         productRepository.deleteById(id);
+    }
+
+    @Override
+    public CustomPageResponse<ProductResponse> getAllProductsWithPage(Pageable pageable) {
+        Page<ProductEntity> productEntities = productRepository.findAll(pageable);
+        Page<ProductResponse> productResponses = productEntities.map(productMapper::toProductResponse);
+        return CustomPageResponse.fromPage(productResponses);
+    }
+
+    @Override
+    public CustomPageResponse<ProductResponse> searchProducts(String name, Double minPrice,
+                                                              Double maxPrice, Long categoryId, Pageable pageable) {
+        Page<ProductEntity> products = productRepository.searchProducts(name, minPrice, maxPrice, categoryId, pageable);
+        Page<ProductResponse> productResponse = products.map(productMapper::toProductResponse);
+        return CustomPageResponse.fromPage(productResponse);
     }
 }

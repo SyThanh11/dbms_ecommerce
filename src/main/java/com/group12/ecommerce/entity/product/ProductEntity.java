@@ -2,7 +2,6 @@ package com.group12.ecommerce.entity.product;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.group12.ecommerce.entity.category.CategoryEntity;
-import com.group12.ecommerce.entity.order.OrderEntity;
 import com.group12.ecommerce.entity.order_product.OrderProductEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -15,7 +14,14 @@ import java.util.Set;
 @NoArgsConstructor
 @Getter
 @Setter
-@Table(name = "product")
+@Table(
+        name = "product",
+        indexes = {
+                @Index(name = "idx_product_name", columnList = "name"),
+                @Index(name = "idx_product_price", columnList = "price"),
+                @Index(name = "idx_product_total", columnList = "total")
+        }
+)
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ProductEntity {

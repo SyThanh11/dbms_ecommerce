@@ -11,6 +11,7 @@ import com.group12.ecommerce.mapper.user.IUserMapper;
 import com.group12.ecommerce.repository.role.IRoleRepository;
 import com.group12.ecommerce.repository.user.IUserRepository;
 import com.group12.ecommerce.service.interfaceService.user.IUserService;
+import jakarta.persistence.criteria.Predicate;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -18,10 +19,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
@@ -78,6 +80,29 @@ public class UserService implements IUserService {
     public CustomPageResponse<UserResponse> getAllUsersWithPage(Pageable pageable) {
         Page<UserEntity> userEntities = userRepository.findAll(pageable);
         Page<UserResponse> userResponses = userEntities.map(userMapper::toUserResponse);
+        return CustomPageResponse.fromPage(userResponses);
+    }
+
+    @Override
+    public CustomPageResponse<UserResponse> searchUsers(String username, String email, String fullName, Pageable pageable) {
+        Specification<UserEntity> spec = (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            if (username != null && !username.isBlank()) {
+                predicates.add(criteriaBuilder.like(root.get("username"), "%" + username + "%"));
+            }
+            if (email != null && !email.isBlank()) {
+                predicates.add(criteriaBuilder.like(root.get("email"), "%" + email + "%"));
+            }
+            if (fullName != null && !fullName.isBlank()) {
+                predicates.add(criteriaBuilder.like(root.get("fullName"), "%" + fullName + "%"));
+            }
+
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+
+        Page<UserEntity> userPage = userRepository.findAll(spec, pageable);
+        Page<UserResponse> userResponses = userPage.map(userMapper::toUserResponse);
         return CustomPageResponse.fromPage(userResponses);
     }
 

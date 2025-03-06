@@ -4,6 +4,7 @@ import com.group12.ecommerce.dto.request.order.OrderCreationRequest;
 import com.group12.ecommerce.dto.request.order.OrderUpdateRequest;
 import com.group12.ecommerce.dto.response.order.OrderResponse;
 import com.group12.ecommerce.dto.response.page.CustomPageResponse;
+import com.group12.ecommerce.entity.order.OrderStatus;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
@@ -18,4 +19,7 @@ public interface IOrderService {
     OrderResponse createOrder(OrderCreationRequest request);
     OrderResponse selectPaymentMethod(String orderId, String paymentMethod);
     OrderResponse confirmPayment(String orderId, boolean isSuccess);
+
+    // history
+    CustomPageResponse<OrderResponse> getUserOrderHistory(String userId, OrderStatus status, Pageable pageable);
 }

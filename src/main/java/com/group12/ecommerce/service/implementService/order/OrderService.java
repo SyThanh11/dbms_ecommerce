@@ -21,6 +21,7 @@ import com.group12.ecommerce.repository.payment.IPaymentRepository;
 import com.group12.ecommerce.repository.product.IProductRepository;
 import com.group12.ecommerce.repository.user.IUserRepository;
 import com.group12.ecommerce.service.interfaceService.order.IOrderService;
+import com.group12.ecommerce.service.interfaceService.order_scheduler.IOrderSchedulerService;
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -57,6 +58,8 @@ public class OrderService implements IOrderService {
 
     @Autowired
     IOrderMapper orderMapper;
+    @Autowired
+    IOrderSchedulerService orderSchedulerService;
 
     @Override
     public CustomPageResponse<OrderResponse> getAllOrdersWithPage(Pageable pageable) {
@@ -118,6 +121,9 @@ public class OrderService implements IOrderService {
         order.setTotalPrice(totalPrice);
         order.setOrderProducts(orderProductEntitySet);
 
+        // ✅ Đặt timeout rollback sau 30s nếu không có thanh toán
+        orderSchedulerService.scheduleOrderRollback(order.getId(), 30);
+
         return orderMapper.toOrderResponse(orderRepository.save(order));
     }
 
@@ -141,6 +147,11 @@ public class OrderService implements IOrderService {
                 .build();
 
         paymentRepository.save(payment);
+
+        orderSchedulerService.cancelOrderRollback(order.getId());
+        // ✅ Đặt timeout rollback sau 10 phút nếu không thanh toán
+        orderSchedulerService.schedulePaymentRollback(order.getId(), 1);
+
         return orderMapper.toOrderResponse(order);
     }
 
@@ -151,7 +162,7 @@ public class OrderService implements IOrderService {
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_EXISTED));
 
         PaymentEntity payment = paymentRepository.findByOrderId(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         if (!order.getStatus().equals(OrderStatus.PENDING) ||
                 !payment.getStatus().equals(PaymentStatus.PROCESSING)) {
@@ -163,6 +174,7 @@ public class OrderService implements IOrderService {
             order.setStatus(OrderStatus.PAID);
             payment.setStatus(PaymentStatus.SUCCESS);
             payment.setDate(LocalDateTime.now());
+            orderSchedulerService.cancelPaymentFromRollback(orderId);
         } else {
             // ❌ Thanh toán thất bại -> Rollback
             order.setStatus(OrderStatus.CANCELLED);
@@ -184,6 +196,13 @@ public class OrderService implements IOrderService {
         orderRepository.save(order);
 
         return orderMapper.toOrderResponse(order);
+    }
+
+    @Override
+    public CustomPageResponse<OrderResponse> getUserOrderHistory(String userId, OrderStatus status, Pageable pageable) {
+        Page<OrderEntity> orderEntities = orderRepository.findUserOrderHistory(userId, status, pageable);
+        Page<OrderResponse> orderResponses = orderEntities.map(orderMapper::toOrderResponse);
+        return CustomPageResponse.fromPage(orderResponses);
     }
 
     @Override

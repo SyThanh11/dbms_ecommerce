@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -28,14 +29,14 @@ public class RoleEntity {
     @Column(columnDefinition = "varchar(255) comment 'description'")
     String description;
 
-    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ManyToMany(cascade = {CascadeType.MERGE, CascadeType.PERSIST}, fetch = FetchType.LAZY)
     @JoinTable(
             name = "role_permission",
             joinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "permission_id", referencedColumnName = "id")
     )
     @JsonIgnore
-    Set<PermissionEntity> permissions;
+    Set<PermissionEntity> permissions = new HashSet<>();
 
     @ManyToMany(fetch = FetchType.LAZY, mappedBy = "roles")
     Set<UserEntity> users;

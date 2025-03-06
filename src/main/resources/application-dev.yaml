@@ -5,6 +5,9 @@ server:
     context-path: /ecommerce
   domain: "http://localhost:8081"
 
+security:
+  user:
+    password:
 
 spring:
   application:
@@ -23,12 +26,18 @@ spring:
       hibernate:
         format_sql: true
         use_sql_comments: true
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: order-group
+      producer:
+        retries: 3
   mail:
     host: smtp.gmail.com
     port: 587
     username: testemailgroup12@gmail.com
-#    password: Admin123.
-    password: mcrlpvwqnkpqotlp
+    password: Admin123.
+#    password: mcrlpvwqnkpqotlp
     properties:
       mail:
         smtp:

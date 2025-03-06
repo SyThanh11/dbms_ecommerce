@@ -3,14 +3,19 @@ package com.group12.ecommerce.controller.product;
 import com.group12.ecommerce.dto.request.product.ProductCreationRequest;
 import com.group12.ecommerce.dto.request.product.ProductUpdateRequest;
 import com.group12.ecommerce.dto.response.api.ApiResponse;
+import com.group12.ecommerce.dto.response.page.CustomPageResponse;
 import com.group12.ecommerce.dto.response.product.ProductResponse;
 import com.group12.ecommerce.service.interfaceService.product.IProductService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -83,6 +88,60 @@ public class ProductController {
         return ResponseEntity.status(HttpStatus.OK).body(
                 ApiResponse.builder()
                         .message("Delete product success!")
+                        .build()
+        );
+    }
+
+    @Operation(summary = "Get all products with paging", description = "API for getting all products with paging")
+    @GetMapping("/get-page")
+    ResponseEntity<ApiResponse<CustomPageResponse<ProductResponse>>> getAllProductsWithPage(
+            @RequestParam int page,
+            @RequestParam int size,
+            @RequestParam(defaultValue = "") String sort,
+            @RequestParam(defaultValue = "desc") String direction
+    ) {
+        Pageable pageable;
+
+        if (sort.isEmpty()) {
+            pageable = PageRequest.of(page, size);
+        } else {
+            Sort.Direction sortDirection =
+                    direction.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
+            Sort sortBy = Sort.by(sortDirection, sort);
+            pageable = PageRequest.of(page, size, sortBy);
+        }
+
+        return ResponseEntity.status(HttpStatus.OK).body(
+                ApiResponse.<CustomPageResponse<ProductResponse>>builder()
+                        .message("Get all products success!")
+                        .data(productService.getAllProductsWithPage(pageable))
+                        .build()
+        );
+    }
+
+    @Operation(summary = "Search products with filters", description = "API for searching products with filters")
+    @GetMapping("/search")
+    public ResponseEntity<ApiResponse<CustomPageResponse<ProductResponse>>> searchProducts(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) Double minPrice,
+            @RequestParam(required = false) Double maxPrice,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam int page,
+            @RequestParam int size,
+            @RequestParam(defaultValue = "name") String sort,
+            @RequestParam(defaultValue = "asc") String direction
+    ) {
+        Sort.Direction sortDirection =
+                direction.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sort));
+
+        CustomPageResponse<ProductResponse> products = productService
+                .searchProducts(name, minPrice, maxPrice, categoryId, pageable);
+
+        return ResponseEntity.status(HttpStatus.OK).body(
+                ApiResponse.<CustomPageResponse<ProductResponse>>builder()
+                        .message("Search products success")
+                        .data(products)
                         .build()
         );
     }

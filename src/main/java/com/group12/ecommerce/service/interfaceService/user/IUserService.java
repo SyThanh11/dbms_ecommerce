@@ -15,4 +15,7 @@ public interface IUserService {
 
     // pageable
     CustomPageResponse<UserResponse> getAllUsersWithPage(Pageable pageable);
+
+    // search
+    CustomPageResponse<UserResponse> searchUsers(String username, String email, String fullName, Pageable pageable);
 }

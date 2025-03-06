@@ -43,6 +43,7 @@ import java.text.ParseException;
 import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @Slf4j
@@ -132,12 +133,10 @@ public class AuthService implements IAuthService {
 
     @Override
     public void forgotPassword(ForgotPasswordRequest request) {
-        UserEntity user = userRepository.findByUsername(
-                request.getUsername()
-        ).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        UserEntity user = userRepository.findByUsername(request.getUsername())
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         String newPassword = generateRandomPassword(8);
-
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
 
@@ -145,22 +144,27 @@ public class AuthService implements IAuthService {
                 "name", user.getFullName(),
                 "newPassword", newPassword
         );
+        log.info(user.getUsername());
 
-        try {
-            emailService.sendEmailFromTemplate(
-                    "no-reply@ecommerce.com",
-                    user.getEmail(),
-                    "Reset Password",
-                    "templates/htmlForgotPasswordTemplate.html",
-                    placeholders
-            );
-        } catch (MessagingException | IOException e) {
-            log.error("❌ Failed to send reset password email", e);
-            throw new AppException(ErrorCode.EMAIL_SEND_FAILED);
-        }
+        // Gửi email bất đồng bộ
+        CompletableFuture.runAsync(() -> {
+            try {
+                emailService.sendEmailFromTemplate(
+                        "no-reply@ecommerce.com",
+                        user.getEmail(),
+                        "Reset Password",
+                        "templates/htmlForgotPasswordTemplate.html",
+                        placeholders
+                );
+                log.info("✅ Password reset email sent to {}", user.getEmail());
+            } catch (MessagingException | IOException e) {
+                log.error("❌ Failed to send reset password email", e);
+            }
+        });
 
-        log.info("✅ Password reset email sent to {}", user.getEmail());
+        log.info("🔄 Processing password reset for {}", user.getUsername());
     }
+
 
     @Override
     public String getCurrentUsername() {
