@@ -29,9 +29,11 @@ public enum ErrorCode {
     NAME_PRODUCT_EXISTED(1011, "Name's product is existed!", HttpStatus.BAD_REQUEST),
     NAME_PRODUCT_NOT_EXISTED(1012, "Name's product is not existed!", HttpStatus.BAD_REQUEST),
     ORDER_NOT_EXISTED(1013, "Order is not existed!", HttpStatus.BAD_REQUEST),
+    ROLE_NOT_FOUND(1014, "Role is not found!", HttpStatus.BAD_REQUEST),
 
     UNAUTHENTICATED(3001, "Unauthenticated", HttpStatus.UNAUTHORIZED),
     TOKEN_NOT_CREATED(3002, "Token is not created!", HttpStatus.BAD_REQUEST),
+    ACCESS_DENIED(3003, "Access denied", HttpStatus.FORBIDDEN),
 
     EMAIL_SEND_FAILED(4001, "Email send failed!", HttpStatus.BAD_REQUEST);
 

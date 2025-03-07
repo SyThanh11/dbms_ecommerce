@@ -32,6 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -74,6 +75,7 @@ public class OrderService implements IOrderService {
 
     @Override
     @Transactional
+    @PreAuthorize("hasAuthority('ROLE_ADMIN') || hasAuthority('ROLE_USER')")
     public OrderResponse createOrder(OrderCreationRequest request) {
         UserEntity user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -133,6 +135,7 @@ public class OrderService implements IOrderService {
 
     @Override
     @Transactional
+    @PreAuthorize("hasAuthority('ROLE_ADMIN') || hasAuthority('ROLE_USER')")
     public String selectPaymentMethod(String orderId, String orderInfo, String paymentMethod, String urlReturn, HttpServletRequest request) {
         OrderEntity order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
@@ -203,6 +206,7 @@ public class OrderService implements IOrderService {
     }
 
     @Override
+    @PreAuthorize("hasAuthority('ROLE_ADMIN') || hasAuthority('ROLE_USER')")
     public CustomPageResponse<OrderResponse> getUserOrderHistory(String userId, OrderStatus status, Pageable pageable) {
         Page<OrderEntity> orderEntities = orderRepository.findUserOrderHistory(userId, status, pageable);
         Page<OrderResponse> orderResponses = orderEntities.map(orderMapper::toOrderResponse);
@@ -210,11 +214,13 @@ public class OrderService implements IOrderService {
     }
 
     @Override
+    @PreAuthorize("hasAuthority('ROLE_ADMIN') || hasAuthority('ROLE_USER')")
     public List<OrderResponse> getAllOrders() {
         return orderMapper.toListOrderResponse(orderRepository.findAll());
     }
 
     @Override
+    @PreAuthorize("hasAuthority('ROLE_ADMIN') || hasAuthority('ROLE_USER')")
     public OrderResponse getOrderById(String id) {
         OrderEntity orderEntity = orderRepository.findById(id)
                 .orElseThrow( () ->
@@ -226,6 +232,7 @@ public class OrderService implements IOrderService {
 
     @Override
     @Transactional
+    @PreAuthorize("hasAuthority('ROLE_ADMIN') || hasAuthority('ROLE_USER')")
     public OrderResponse updateOrder(String id, OrderUpdateRequest request) {
         OrderEntity orderEntity = orderRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_EXISTED));
@@ -293,6 +300,7 @@ public class OrderService implements IOrderService {
 
     @Override
     @Transactional
+    @PreAuthorize("hasAuthority('ROLE_ADMIN') || hasAuthority('ROLE_USER')")
     public void deleteOrder(String id) {
         OrderEntity orderEntity = orderRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_EXISTED));

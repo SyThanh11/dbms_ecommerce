@@ -17,6 +17,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
@@ -35,6 +36,7 @@ public class RoleService implements IRoleService {
     IRoleMapper roleMapper;
 
     @Override
+    @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public RoleResponse createRole(RoleCreationRequest request) {
         try{
             RoleEntity roleEntity = roleMapper.toRoleEntity(request);
@@ -51,11 +53,13 @@ public class RoleService implements IRoleService {
     }
 
     @Override
+    @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public List<RoleResponse> getAllRoles() {
         return roleMapper.toListRoleResponse(roleRepository.findAll());
     }
 
     @Override
+    @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public RoleResponse getRoleById(Long id) {
         RoleEntity role = roleRepository.findById(id)
                 .orElseThrow(() ->
@@ -67,11 +71,13 @@ public class RoleService implements IRoleService {
 
 
     @Override
+    @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public void deleteRole(Long id) {
         roleRepository.deleteById(id);
     }
 
     @Override
+    @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public RoleResponse updateRole(Long id, RoleUpdateRequest request) {
         RoleEntity role = roleRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));

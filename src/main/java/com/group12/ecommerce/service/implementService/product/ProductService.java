@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
@@ -40,6 +41,7 @@ public class ProductService implements IProductService {
     IProductMapper productMapper;
 
     @Override
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ProductResponse createProduct(ProductCreationRequest request) {
         try {
             ProductEntity productEntity = productMapper.toProductEntity(request);
@@ -60,6 +62,7 @@ public class ProductService implements IProductService {
     }
 
     @Override
+    @PreAuthorize("hasAuthority('ROLE_ADMIN') || hasAuthority('ROLE_USER')")
     public List<ProductResponse> getAllProducts() {
         return productMapper.toListProductResponse(
                 productRepository.findAll()
@@ -67,6 +70,7 @@ public class ProductService implements IProductService {
     }
 
     @Override
+    @PreAuthorize("hasAuthority('ROLE_ADMIN') || hasAuthority('ROLE_USER')")
     public ProductResponse getProductById(Long id) {
         ProductEntity product = productRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.NAME_PRODUCT_NOT_EXISTED));
@@ -75,6 +79,7 @@ public class ProductService implements IProductService {
     }
 
     @Override
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ProductResponse updateProduct(Long id, ProductUpdateRequest request) {
         ProductEntity product = productRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.NAME_PRODUCT_NOT_EXISTED));
@@ -89,11 +94,13 @@ public class ProductService implements IProductService {
     }
 
     @Override
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public void deleteProduct(Long id) {
         productRepository.deleteById(id);
     }
 
     @Override
+    @PreAuthorize("hasAuthority('ROLE_ADMIN') || hasAuthority('ROLE_USER')")
     public CustomPageResponse<ProductResponse> getAllProductsWithPage(Pageable pageable) {
         Page<ProductEntity> productEntities = productRepository.findAll(pageable);
         Page<ProductResponse> productResponses = productEntities.map(productMapper::toProductResponse);
@@ -101,6 +108,7 @@ public class ProductService implements IProductService {
     }
 
     @Override
+    @PreAuthorize("hasAuthority('ROLE_ADMIN') || hasAuthority('ROLE_USER')")
     public CustomPageResponse<ProductResponse> searchProducts(String name, Double minPrice,
                                                               Double maxPrice, Long categoryId, Pageable pageable) {
         Page<ProductEntity> products = productRepository.searchProducts(name, minPrice, maxPrice, categoryId, pageable);

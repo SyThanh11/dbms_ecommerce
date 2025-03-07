@@ -10,9 +10,11 @@ import com.group12.ecommerce.dto.request.user.UserCreationRequest;
 import com.group12.ecommerce.dto.response.auth.AuthResponse;
 import com.group12.ecommerce.dto.response.auth.IntrospectResponse;
 import com.group12.ecommerce.dto.response.user.UserResponse;
+import com.group12.ecommerce.entity.role.RoleEntity;
 import com.group12.ecommerce.entity.token.InvalidatedTokenEntity;
 import com.group12.ecommerce.entity.user.UserEntity;
 import com.group12.ecommerce.mapper.user.IUserMapper;
+import com.group12.ecommerce.repository.role.IRoleRepository;
 import com.group12.ecommerce.repository.token.IInvalidatedTokenRepository;
 import com.group12.ecommerce.repository.user.IUserRepository;
 import com.group12.ecommerce.service.interfaceService.auth.IAuthService;
@@ -40,9 +42,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.text.ParseException;
-import java.util.Date;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 @Service
@@ -54,6 +54,8 @@ public class AuthService implements IAuthService {
     IUserRepository userRepository;
     @Autowired
     IInvalidatedTokenRepository invalidatedTokenRepository;
+    @Autowired
+    IRoleRepository roleRepository;
 
     @Autowired
     IUserMapper userMapper;
@@ -71,6 +73,11 @@ public class AuthService implements IAuthService {
         try {
             UserEntity user = userMapper.toUserEntity(request);
             user.setPassword(passwordEncoder.encode(user.getPassword()));
+
+            RoleEntity role = roleRepository.findByName("USER")
+                    .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
+
+            user.setRoles(new HashSet<>(Collections.singleton(role)));
 
             return userMapper.toUserResponse(userRepository.save(user));
         } catch (DataIntegrityViolationException e) {

@@ -15,14 +15,15 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
     private static final String[] PUBLIC_ENDPOINTS = {
             "api/v1/auth/signup",
             "api/v1/auth/login",
             "api/v1/auth/introspect",
             "api/v1/auth/logout",
-            "api/v1/auth/refresh"
+            "api/v1/auth/refresh",
+            "api/v1/vnpay/vnpay-payment"
     };
 
     private final CustomJwtDecoder customJwtDecoder;
@@ -41,15 +42,15 @@ public class SecurityConfig {
                         .permitAll()
         );
 
-//        httpSecurity.oauth2ResourceServer(
-//                httpSecurityOAuth2ResourceServerConfigurer ->
-//                        httpSecurityOAuth2ResourceServerConfigurer
-//                                .jwt(jwtConfigurer -> jwtConfigurer
-//                                        .decoder(customJwtDecoder)
-//                                        .jwtAuthenticationConverter(jwtAuthenticationConverter())
-//                                )
-//                                .authenticationEntryPoint(new JWTAuthenticationEntryPoint())
-//                );
+        httpSecurity.oauth2ResourceServer(
+                httpSecurityOAuth2ResourceServerConfigurer ->
+                        httpSecurityOAuth2ResourceServerConfigurer
+                                .jwt(jwtConfigurer -> jwtConfigurer
+                                        .decoder(customJwtDecoder)
+                                        .jwtAuthenticationConverter(jwtAuthenticationConverter())
+                                )
+                                .authenticationEntryPoint(new JWTAuthenticationEntryPoint())
+                );
 
         httpSecurity.csrf(AbstractHttpConfigurer::disable);
 

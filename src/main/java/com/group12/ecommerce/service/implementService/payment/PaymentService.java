@@ -9,6 +9,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -22,6 +23,7 @@ public class PaymentService implements IPaymentService {
     IPaymentRepository paymentRepository;
 
     @Override
+    @PreAuthorize("hasAuthority('ROLE_ADMIN') || hasAuthority('ROLE_USER')")
     public PaymentEntity processPayment(OrderEntity order, String paymentMethod) {
         PaymentEntity payment = PaymentEntity.builder()
                 .order(order)
@@ -48,6 +50,7 @@ public class PaymentService implements IPaymentService {
     }
 
     @Override
+    @PreAuthorize("hasAuthority('ROLE_ADMIN') || hasAuthority('ROLE_USER')")
     public boolean processPayPalPayment(OrderEntity order) {
         log.info("Connecting to PayPal API...");
         try {

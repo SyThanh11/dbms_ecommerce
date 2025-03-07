@@ -15,6 +15,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -30,6 +31,7 @@ public class PermissionService implements IPermissionService {
     IPermissionMapper permissionMapper;
 
     @Override
+    @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public PermissionResponse createPermission(PermissionCreationRequest request) {
         try {
             PermissionEntity permission = permissionMapper.toPermissionEntity(request);
@@ -43,6 +45,7 @@ public class PermissionService implements IPermissionService {
     }
 
     @Override
+    @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public List<PermissionResponse> getAllPermissions() {
         return permissionMapper.toListPermissionResponse(
                 permissionRepository.findAll()
@@ -50,6 +53,7 @@ public class PermissionService implements IPermissionService {
     }
 
     @Override
+    @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public PermissionResponse getPermissionById(Long id) {
         PermissionEntity permissionEntity = permissionRepository.findById(id)
                 .orElseThrow(()
@@ -58,11 +62,13 @@ public class PermissionService implements IPermissionService {
     }
 
     @Override
+    @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public void deletePermission(Long id) {
         permissionRepository.deleteById(id);
     }
 
     @Override
+    @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public PermissionResponse updatePermission(Long id, PermissionUpdateRequest request) {
         PermissionEntity currentPermission = permissionRepository.findById(id)
                 .orElseThrow(()

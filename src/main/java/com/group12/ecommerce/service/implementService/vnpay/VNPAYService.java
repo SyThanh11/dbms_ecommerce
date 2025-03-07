@@ -4,6 +4,7 @@ import com.group12.ecommerce.base.config.VNPayConfig;
 import com.group12.ecommerce.service.interfaceService.vnpay.IVNPAYService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.io.UnsupportedEncodingException;
@@ -18,6 +19,7 @@ import java.util.*;
 public class VNPAYService implements IVNPAYService {
 
     @Override
+    @PreAuthorize("hasAuthority('ROLE_ADMIN') || hasAuthority('ROLE_USER')")
     public String createPaymentUrl(BigDecimal total, String orderInfor, String urlReturn, HttpServletRequest request) {
         String vnp_Version = "2.1.0";
         String vnp_Command = "pay";

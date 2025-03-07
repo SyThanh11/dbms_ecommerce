@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -44,12 +45,13 @@ public class UserService implements IUserService {
     private PasswordEncoder passwordEncoder;
 
     @Override
-//    @PreAuthorize("hasAuthority('UPDATE_PRODUCT')")
+    @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public List<UserResponse> getAllUsers() {
         return userMapper.toListUserResponse(userRepository.findAll());
     }
 
     @Override
+    @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public UserResponse getUserById(String id) {
         UserEntity user = userRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
@@ -58,6 +60,7 @@ public class UserService implements IUserService {
     }
 
     @Override
+    @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public UserResponse updateUser(String id, UserUpdateRequest request) {
         UserEntity user = userRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
@@ -72,11 +75,13 @@ public class UserService implements IUserService {
     }
 
     @Override
+    @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public void deleteUser(String id) {
         userRepository.deleteById(id);
     }
 
     @Override
+    @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public CustomPageResponse<UserResponse> getAllUsersWithPage(Pageable pageable) {
         Page<UserEntity> userEntities = userRepository.findAll(pageable);
         Page<UserResponse> userResponses = userEntities.map(userMapper::toUserResponse);
@@ -84,6 +89,7 @@ public class UserService implements IUserService {
     }
 
     @Override
+    @PreAuthorize("hasAuthority('MANAGE_USERS')")
     public CustomPageResponse<UserResponse> searchUsers(String username, String email, String fullName, Pageable pageable) {
         Specification<UserEntity> spec = (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
